@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARIEL — Advanced Reasoning & Intelligent Execution Layer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        /* ══════════════════════════════════════════════════════════
+           CSS VARIABLES & RESET
+           ══════════════════════════════════════════════════════════ */
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f7fa;
+            --bg-card: #f0f2f6;
+            --bg-card-hover: #e8ebf0;
+            --accent: #4a7cf7;
+            --accent-glow: rgba(74, 124, 247, 0.1);
+            --accent-secondary: #7c5cfc;
+            --text-primary: #1a1d2e;
+            --text-secondary: #5c6070;
+            --text-muted: #9498ab;
+            --border: rgba(0,0,0,0.07);
+            --border-hover: rgba(74, 124, 247, 0.3);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --font-main: 'Outfit', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: var(--font-main);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        a { color: var(--accent); text-decoration: none; transition: color 0.2s; }
+        a:hover { color: #3566d9; }
+
+        /* ══════════════════════════════════════════════════════════
+           LANGUAGE SYSTEM — hide/show elements based on active lang
+           ══════════════════════════════════════════════════════════ */
+        [data-lang="es"] { display: none !important; }
+        body.lang-es [data-lang="es"] { display: revert !important; }
+        body.lang-es [data-lang="en"] { display: none !important; }
+
+        /* ══════════════════════════════════════════════════════════
+           BACKGROUND EFFECTS
+           ══════════════════════════════════════════════════════════ */
+        .bg-glow {
+            position: fixed;
+            top: -30%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 900px;
+            height: 900px;
+            background: radial-gradient(circle, rgba(74,124,247,0.06) 0%, rgba(124,92,252,0.03) 40%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0,0,0,0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,0,0,0.025) 1px, transparent 1px);
+            background-size: 80px 80px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           LAYOUT
+           ══════════════════════════════════════════════════════════ */
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        section { padding: 100px 0; }
+
+        /* ══════════════════════════════════════════════════════════
+           NAV
+           ══════════════════════════════════════════════════════════ */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            padding: 18px 0;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        nav .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 1.15rem;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+        }
+
+        .nav-brand img {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover { color: var(--text-primary); }
+
+        .nav-github {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 7px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-primary) !important;
+            transition: all 0.2s;
+        }
+
+        .nav-github:hover {
+            border-color: var(--border-hover);
+            background: var(--bg-card-hover);
+        }
+
+        /* Language switcher */
+        .lang-switch {
+            display: inline-flex;
+            align-items: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .lang-switch button {
+            all: unset;
+            padding: 6px 12px;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all 0.2s;
+            font-family: var(--font-main);
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .lang-switch button.active {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .lang-switch button:hover:not(.active) {
+            color: var(--text-primary);
+            background: rgba(0,0,0,0.04);
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           HERO
+           ══════════════════════════════════════════════════════════ */
+        .hero {
+            padding: 180px 0 120px;
+            text-align: center;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--accent-glow);
+            border: 1px solid rgba(74,124,247,0.2);
+            padding: 6px 18px;
+            border-radius: 100px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--accent);
+            margin-bottom: 32px;
+            animation: fadeInDown 0.6s ease-out;
+        }
+
+        .hero-badge::before {
+            content: '';
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+            animation: pulse 2s infinite;
+        }
+
+        .hero-logo {
+            width: 88px;
+            height: 88px;
+            border-radius: 22px;
+            margin-bottom: 28px;
+            animation: fadeInDown 0.6s ease-out 0.1s both;
+            box-shadow: 0 8px 40px rgba(74,124,247,0.15);
+        }
+
+        .hero h1 {
+            font-size: clamp(2.8rem, 6vw, 4.2rem);
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            line-height: 1.1;
+            margin-bottom: 10px;
+            animation: fadeInDown 0.6s ease-out 0.2s both;
+        }
+
+        .hero h1 .gradient-text {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 50%, #5c3ad6 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-acronym {
+            font-size: 1rem;
+            font-weight: 400;
+            color: var(--text-muted);
+            letter-spacing: 0.15em;
+            margin-bottom: 24px;
+            animation: fadeInDown 0.6s ease-out 0.3s both;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 620px;
+            margin: 0 auto 44px;
+            font-weight: 300;
+            animation: fadeInDown 0.6s ease-out 0.35s both;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: fadeInDown 0.6s ease-out 0.45s both;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 30px;
+            border-radius: var(--radius-sm);
+            font-family: var(--font-main);
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.25s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), #3a6ee0);
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(74,124,247,0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(74,124,247,0.35);
+            color: #fff;
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--border-hover);
+            background: var(--bg-card-hover);
+            transform: translateY(-2px);
+            color: var(--text-primary);
+        }
+
+        .hero-terminal {
+            max-width: 500px;
+            margin: 50px auto 0;
+            background: #1a1d2e;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            animation: fadeInUp 0.6s ease-out 0.6s both;
+        }
+
+        .terminal-bar {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.04);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .terminal-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+        }
+
+        .terminal-dot:nth-child(1) { background: #ff5f57; }
+        .terminal-dot:nth-child(2) { background: #febc2e; }
+        .terminal-dot:nth-child(3) { background: #28c840; }
+
+        .terminal-body {
+            padding: 20px;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: #8b8fa4;
+            text-align: left;
+        }
+
+        .terminal-body .prompt { color: #6c9cfc; }
+        .terminal-body .cmd { color: #e8eaf0; }
+        .terminal-body .output { color: #5a5e72; margin-top: 8px; }
+
+        /* ══════════════════════════════════════════════════════════
+           FEATURES
+           ══════════════════════════════════════════════════════════ */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 32px;
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            border-color: var(--border-hover);
+            background: var(--bg-card-hover);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.08);
+        }
+
+        .feature-icon {
+            font-size: 1.8rem;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .feature-card h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 300;
+            line-height: 1.65;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .section-title h2 {
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            margin-bottom: 12px;
+        }
+
+        .section-title p {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            font-weight: 300;
+            max-width: 550px;
+            margin: 0 auto;
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           SCREENSHOTS
+           ══════════════════════════════════════════════════════════ */
+        .screenshots-track {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+            gap: 24px;
+        }
+
+        .screenshot-item {
+            border-radius: var(--radius);
+            overflow: hidden;
+            border: 1px solid var(--border);
+            transition: all 0.3s;
+            background: var(--bg-card);
+        }
+
+        .screenshot-item:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-4px);
+            box-shadow: 0 16px 48px rgba(0,0,0,0.1);
+        }
+
+        .screenshot-item img {
+            width: 100%;
+            display: block;
+            opacity: 0.9;
+            transition: opacity 0.3s;
+        }
+
+        .screenshot-item:hover img { opacity: 1; }
+
+        .screenshot-placeholder {
+            aspect-ratio: 16/9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-card) 100%);
+            color: var(--text-muted);
+            letter-spacing: 0.3em;
+        }
+
+        .screenshot-caption {
+            padding: 16px 20px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            border-top: 1px solid var(--border);
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           VIDEO
+           ══════════════════════════════════════════════════════════ */
+        .video-wrapper {
+            max-width: 800px;
+            margin: 0 auto;
+            border-radius: var(--radius);
+            overflow: hidden;
+            border: 1px solid var(--border);
+            box-shadow: 0 24px 64px rgba(0,0,0,0.1);
+            aspect-ratio: 16/9;
+        }
+
+        .video-wrapper iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .video-placeholder {
+            max-width: 800px;
+            margin: 0 auto;
+            border-radius: var(--radius);
+            border: 1px dashed var(--border-hover);
+            background: var(--bg-card);
+            aspect-ratio: 16/9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            gap: 12px;
+        }
+
+        .video-placeholder span { font-size: 2.5rem; }
+
+        /* ══════════════════════════════════════════════════════════
+           INSTALL
+           ══════════════════════════════════════════════════════════ */
+        .install-box {
+            max-width: 700px;
+            margin: 0 auto;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 40px 48px;
+            text-align: center;
+        }
+
+        .install-box h3 {
+            font-size: 1.3rem;
+            margin-bottom: 24px;
+            font-weight: 600;
+        }
+
+        .install-steps {
+            text-align: left;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            background: #1a1d2e;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: var(--radius-sm);
+            padding: 24px;
+            margin-bottom: 28px;
+            color: #8b8fa4;
+            line-height: 2;
+        }
+
+        .install-steps .comment { color: #5a5e72; }
+        .install-steps .prompt { color: #6c9cfc; }
+        .install-steps .cmd { color: #e8eaf0; }
+
+        /* ══════════════════════════════════════════════════════════
+           FOOTER
+           ══════════════════════════════════════════════════════════ */
+        footer {
+            padding: 48px 0;
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .footer-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .footer-brand img {
+            width: 24px; height: 24px;
+            border-radius: 6px;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 24px;
+            list-style: none;
+        }
+
+        .footer-links a {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 400;
+        }
+
+        .footer-links a:hover { color: var(--text-secondary); }
+
+        .footer-copy {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           ANIMATIONS
+           ══════════════════════════════════════════════════════════ */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           RESPONSIVE
+           ══════════════════════════════════════════════════════════ */
+        @media (max-width: 768px) {
+            .hero { padding: 140px 0 80px; }
+            .hero-logo { width: 64px; height: 64px; border-radius: 16px; }
+            section { padding: 70px 0; }
+            .nav-links-inner { display: none; }
+            .screenshots-track { grid-template-columns: 1fr; }
+            .install-box { padding: 28px 24px; }
+            .footer-content { flex-direction: column; text-align: center; }
+        }
+
+        @media (max-width: 520px) {
+            .hero-buttons { flex-direction: column; align-items: center; }
+            .btn { width: 100%; justify-content: center; }
+            .hero-terminal { margin: 40px 0 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="bg-glow"></div>
+<div class="bg-grid"></div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     NAV
+     ════════════════════════════════════════════════════════════════ -->
+<nav>
+    <div class="container">
+        <a href="#" class="nav-brand">
+            <img src="data:image/png;base64,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" alt="ARIEL Logo">
+            ARIEL
+        </a>
+        <ul class="nav-links">
+            <li class="nav-links-inner">
+                <a href="#features" data-lang="en">Features</a>
+                <a href="#features" data-lang="es">Características</a>
+            </li>
+            <li class="nav-links-inner">
+                <a href="#screenshots" data-lang="en">Screenshots</a>
+                <a href="#screenshots" data-lang="es">Capturas</a>
+            </li>
+            <li class="nav-links-inner">
+                <a href="#video">Video</a>
+            </li>
+            <li class="nav-links-inner">
+                <a href="#install" data-lang="en">Install</a>
+                <a href="#install" data-lang="es">Instalar</a>
+            </li>
+            <li class="nav-links-inner">
+                <!-- TODO: Replace with your GitHub repo URL -->
+                <a href="https://github.com/josegdeveloper/arielagent" target="_blank" class="nav-github">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                    GitHub
+                </a>
+            </li>
+            <li>
+                <div class="lang-switch">
+                    <button id="btn-en" class="active" onclick="setLang('en')">EN</button>
+                    <button id="btn-es" onclick="setLang('es')">ES</button>
+                </div>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<!-- ════════════════════════════════════════════════════════════════
+     HERO
+     ════════════════════════════════════════════════════════════════ -->
+<section class="hero">
+    <div class="container">
+        <div class="hero-badge" data-lang="en">Open Source &middot; Free &middot; Private</div>
+        <div class="hero-badge" data-lang="es">Open Source &middot; Gratuito &middot; Privado</div>
+        <br>
+        <img src="data:image/png;base64,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" alt="ARIEL" class="hero-logo">
+        <h1><span class="gradient-text">ARIEL</span></h1>
+        <div class="hero-acronym">ADVANCED REASONING &amp; INTELLIGENT EXECUTION LAYER</div>
+
+        <p data-lang="en">An AI agent that controls your PC through natural language. It reasons, plans, executes — and remembers.</p>
+        <p data-lang="es">Un agente de IA que controla tu PC mediante lenguaje natural. Razona, planifica, ejecuta — y recuerda.</p>
+
+        <div class="hero-buttons">
+            <!-- TODO: Replace with your actual download URL -->
+            <a href="https://github.com/josegdeveloper/arielagent/releases" target="_blank" class="btn btn-primary">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span data-lang="en">Download</span>
+                <span data-lang="es">Descargar</span>
+            </a>
+            <a href="https://github.com/josegdeveloper/arielagent" target="_blank" class="btn btn-secondary">
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                <span data-lang="en">View on GitHub</span>
+                <span data-lang="es">Ver en GitHub</span>
+            </a>
+        </div>
+
+        <div class="hero-terminal">
+            <div class="terminal-bar">
+                <div class="terminal-dot"></div>
+                <div class="terminal-dot"></div>
+                <div class="terminal-dot"></div>
+            </div>
+            <div class="terminal-body">
+                <div><span class="prompt">$</span> <span class="cmd">python ariel.py</span></div>
+                <div class="output">
+                    ========================================<br>
+                    &nbsp;🤖 STARTING ARIEL SYSTEM v1.11.0<br>
+                    ========================================<br><br>
+                    ⏰ [1/3] Starting task engine...<br>
+                    📱 [2/3] Starting Telegram connection...<br>
+                    🖥️ [3/3] Starting Web Interface...<br><br>
+                    ✅ All systems online.
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     FEATURES
+     ════════════════════════════════════════════════════════════════ -->
+<section id="features">
+    <div class="container">
+        <div class="section-title reveal">
+            <h2 data-lang="en">What makes ARIEL different</h2>
+            <h2 data-lang="es">Qué hace diferente a ARIEL</h2>
+            <p data-lang="en">A serious desktop agent with a human-friendly experience. No JSONs to edit, no PhD required.</p>
+            <p data-lang="es">Un agente de escritorio serio con una experiencia humana. Sin editar JSONs, sin necesidad de ser experto.</p>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card reveal">
+                <span class="feature-icon">🖥️</span>
+                <h3 data-lang="en">Full PC Control</h3>
+                <h3 data-lang="es">Control total del PC</h3>
+                <p data-lang="en">Mouse, keyboard, screenshots, file management, and system commands — all through natural conversation.</p>
+                <p data-lang="es">Ratón, teclado, capturas de pantalla, gestión de archivos y comandos del sistema — todo mediante conversación natural.</p>
+            </div>
+            <div class="feature-card reveal">
+                <span class="feature-icon">🧠</span>
+                <h3 data-lang="en">Dual Memory</h3>
+                <h3 data-lang="es">Memoria dual</h3>
+                <p data-lang="en">Short-term memory for the current session and persistent long-term memory with semantic search across sessions.</p>
+                <p data-lang="es">Memoria a corto plazo para la sesión actual y memoria a largo plazo persistente con búsqueda semántica entre sesiones.</p>
+            </div>
+            <div class="feature-card reveal">
+                <span class="feature-icon">🔐</span>
+                <h3 data-lang="en">Security First</h3>
+                <h3 data-lang="es">Seguridad ante todo</h3>
+                <p data-lang="en">Password-protected from day one. API keys and tokens are encrypted on disk. Destructive actions require confirmation.</p>
+                <p data-lang="es">Protegido con contraseña desde el primer día. Las API keys y tokens se cifran en disco. Las acciones destructivas requieren confirmación.</p>
+            </div>
+            <div class="feature-card reveal">
+                <span class="feature-icon">🧰</span>
+                <h3 data-lang="en">Dynamic Tools</h3>
+                <h3 data-lang="es">Herramientas dinámicas</h3>
+                <p data-lang="en">ARIEL can create its own tools on the fly. Extend its capabilities without touching a single line of code.</p>
+                <p data-lang="es">ARIEL puede crear sus propias herramientas sobre la marcha. Amplía sus capacidades sin tocar una sola línea de código.</p>
+            </div>
+            <div class="feature-card reveal">
+                <span class="feature-icon">📱</span>
+                <h3 data-lang="en">Telegram Gateway</h3>
+                <h3 data-lang="es">Pasarela Telegram</h3>
+                <p data-lang="en">Talk to ARIEL from your phone via Telegram. Send tasks, receive results and screenshots remotely.</p>
+                <p data-lang="es">Habla con ARIEL desde tu móvil vía Telegram. Envía tareas, recibe resultados y capturas de forma remota.</p>
+            </div>
+            <div class="feature-card reveal">
+                <span class="feature-icon">⏰</span>
+                <h3 data-lang="en">Scheduled Tasks</h3>
+                <h3 data-lang="es">Tareas programadas</h3>
+                <p data-lang="en">Automate routines with a visual scheduler. Define what ARIEL should do, when, and on which days.</p>
+                <p data-lang="es">Automatiza rutinas con un programador visual. Define qué debe hacer ARIEL, cuándo y qué días.</p>
+            </div>
+            <div class="feature-card reveal">
+                <span class="feature-icon">📜</span>
+                <h3 data-lang="en">Constitution (Laws)</h3>
+                <h3 data-lang="es">Constitución (Leyes)</h3>
+                <p data-lang="en">A set of rules the agent never violates. Define boundaries and principles — the agent respects them always.</p>
+                <p data-lang="es">Un conjunto de reglas que el agente nunca viola. Define límites y principios — el agente los respeta siempre.</p>
+            </div>
+            <div class="feature-card reveal">
+                <span class="feature-icon">💰</span>
+                <h3 data-lang="en">Prompt Caching</h3>
+                <h3 data-lang="es">Caché de prompts</h3>
+                <p data-lang="en">Reduces API costs up to 90% by caching the system prompt. Real savings visible in the logs.</p>
+                <p data-lang="es">Reduce los costes de API hasta un 90% cacheando el system prompt. Ahorro real visible en los logs.</p>
+            </div>
+            <div class="feature-card reveal">
+                <span class="feature-icon">🌍</span>
+                <h3 data-lang="en">Multilingual</h3>
+                <h3 data-lang="es">Multilingüe</h3>
+                <p data-lang="en">Full i18n support. UI and agent responses adapt to your language. English and Spanish out of the box.</p>
+                <p data-lang="es">Soporte i18n completo. La interfaz y las respuestas del agente se adaptan a tu idioma. Inglés y español de serie.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SCREENSHOTS
+     ════════════════════════════════════════════════════════════════ -->
+<section id="screenshots">
+    <div class="container">
+        <div class="section-title reveal">
+            <h2 data-lang="en">See it in action</h2>
+            <h2 data-lang="es">Míralo en acción</h2>
+            <p data-lang="en">A clean, intuitive dashboard — not a terminal you need to fight with.</p>
+            <p data-lang="es">Un panel limpio e intuitivo — no un terminal con el que pelear.</p>
+        </div>
+
+        <!--
+            TODO: Replace placeholder images with your actual screenshots.
+            Recommended: 1280x800 or similar landscape ratio.
+            Place the images in this same "website" folder.
+        -->
+        <!--
+            TODO: When you have real screenshots, replace each
+            <div class="screenshot-placeholder">...</div>
+            with:
+            <img src="screenshot-chat.png" alt="ARIEL Chat Interface">
+
+            Recommended: 1280x800 or similar landscape ratio.
+            You can use base64 like the logo, or host the images alongside the HTML.
+        -->
+        <div class="screenshots-track">
+            <div class="screenshot-item reveal">
+                <div class="screenshot-placeholder">🖥️💬</div>
+                <div class="screenshot-caption">
+                    <span data-lang="en">💬 Conversational interface with real-time tool execution</span>
+                    <span data-lang="es">💬 Interfaz conversacional con ejecución de herramientas en tiempo real</span>
+                </div>
+            </div>
+            <div class="screenshot-item reveal">
+                <div class="screenshot-placeholder">⚙️🔧</div>
+                <div class="screenshot-caption">
+                    <span data-lang="en">⚙️ Visual settings — no config files to edit</span>
+                    <span data-lang="es">⚙️ Configuración visual — sin archivos que editar</span>
+                </div>
+            </div>
+            <div class="screenshot-item reveal">
+                <div class="screenshot-placeholder">🧠📋</div>
+                <div class="screenshot-caption">
+                    <span data-lang="en">🧠 Long-term memory viewer with individual management</span>
+                    <span data-lang="es">🧠 Visor de memoria a largo plazo con gestión individual</span>
+                </div>
+            </div>
+            <div class="screenshot-item reveal">
+                <div class="screenshot-placeholder">🧰📦</div>
+                <div class="screenshot-caption">
+                    <span data-lang="en">🧰 Full tool arsenal with source code inspection</span>
+                    <span data-lang="es">🧰 Arsenal completo de herramientas con inspección del código fuente</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     VIDEO
+     ════════════════════════════════════════════════════════════════ -->
+<section id="video">
+    <div class="container">
+        <div class="section-title reveal">
+            <h2 data-lang="en">Watch the demo</h2>
+            <h2 data-lang="es">Mira la demo</h2>
+            <p data-lang="en">See ARIEL come alive in under 5 minutes.</p>
+            <p data-lang="es">Mira cómo ARIEL cobra vida en menos de 5 minutos.</p>
+        </div>
+
+        <!--
+            TODO: Replace YOUR_YOUTUBE_VIDEO_ID with your actual video ID.
+            Uncomment the video-wrapper div and remove the video-placeholder div.
+        -->
+
+        <!--
+        <div class="video-wrapper reveal">
+            <iframe
+                src="https://www.youtube.com/embed/YOUR_YOUTUBE_VIDEO_ID"
+                title="ARIEL Demo"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen>
+            </iframe>
+        </div>
+        -->
+
+        <div class="video-placeholder reveal">
+            <span>🎬</span>
+            <span data-lang="en">Video coming soon</span>
+            <span data-lang="es">Vídeo próximamente</span>
+        </div>
+    </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     INSTALL
+     ════════════════════════════════════════════════════════════════ -->
+<section id="install">
+    <div class="container">
+        <div class="install-box reveal">
+            <h3 data-lang="en">Get started in 60 seconds</h3>
+            <h3 data-lang="es">Empieza en 60 segundos</h3>
+
+            <div class="install-steps" data-lang="en">
+                <span class="comment"># Clone the repository</span><br>
+                <span class="prompt">$</span> <span class="cmd">git clone https://github.com/josegdeveloper/arielagent.git</span><br>
+                <span class="prompt">$</span> <span class="cmd">cd ariel</span><br><br>
+                <span class="comment"># Install dependencies</span><br>
+                <span class="prompt">$</span> <span class="cmd">pip install -r requirements.txt</span><br><br>
+                <span class="comment"># Launch ARIEL</span><br>
+                <span class="prompt">$</span> <span class="cmd">python ariel.py</span>
+            </div>
+
+            <div class="install-steps" data-lang="es">
+                <span class="comment"># Clona el repositorio</span><br>
+                <span class="prompt">$</span> <span class="cmd">git clone https://github.com/josegdeveloper/arielagent.git</span><br>
+                <span class="prompt">$</span> <span class="cmd">cd ariel</span><br><br>
+                <span class="comment"># Instala las dependencias</span><br>
+                <span class="prompt">$</span> <span class="cmd">pip install -r requirements.txt</span><br><br>
+                <span class="comment"># Lanza ARIEL</span><br>
+                <span class="prompt">$</span> <span class="cmd">python ariel.py</span>
+            </div>
+
+            <a href="https://github.com/josegdeveloper/arielagent" target="_blank" class="btn btn-primary">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span data-lang="en">Download from GitHub</span>
+                <span data-lang="es">Descargar desde GitHub</span>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     FOOTER
+     ════════════════════════════════════════════════════════════════ -->
+<footer>
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <img src="data:image/png;base64,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" alt="ARIEL">
+                ARIEL
+            </div>
+            <ul class="footer-links">
+                <!-- TODO: Replace with your actual URLs -->
+                <li><a href="https://github.com/josegdeveloper/arielagent" target="_blank">GitHub</a></li>
+                <li><a href="https://youtube.com/@arielagent" target="_blank">YouTube</a></li>
+                <li><a href="https://github.josegdeveloper/arielagent/issues" target="_blank">Issues</a></li>
+            </ul>
+            <div class="footer-copy">
+                &copy; 2026 ARIEL Project &middot; Made by JoseG &middot; Open Source
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SCRIPTS
+     ════════════════════════════════════════════════════════════════ -->
+<script>
+    // ── Language switcher ──────────────────────────────────────
+    function setLang(lang) {
+        document.body.classList.toggle('lang-es', lang === 'es');
+        document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+        document.getElementById('btn-es').classList.toggle('active', lang === 'es');
+        document.documentElement.lang = lang;
+        localStorage.setItem('ariel-lang', lang);
+    }
+
+    // Restore language from previous visit, or detect from browser
+    (function() {
+        const saved = localStorage.getItem('ariel-lang');
+        if (saved) {
+            setLang(saved);
+        } else {
+            const browserLang = navigator.language || navigator.userLanguage || 'en';
+            setLang(browserLang.startsWith('es') ? 'es' : 'en');
+        }
+    })();
+
+    // ── Scroll reveal ──────────────────────────────────────────
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                const siblings = entry.target.parentElement.querySelectorAll('.reveal');
+                const index = Array.from(siblings).indexOf(entry.target);
+                entry.target.style.transitionDelay = `${index * 0.08}s`;
+                entry.target.classList.add('visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>
